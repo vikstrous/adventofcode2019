@@ -331,17 +331,40 @@ func (c *combinator) next() ([]int, bool) {
 	return c.current, true
 }
 
+func makeConstantInputter(inputs []int) func() int {
+	i := 0
+
+	return func() int {
+		ret := inputs[i]
+		i++
+		return ret
+	}
+}
+func makeSingleOutputter(target *int) func(int) {
+	return func(output int) {
+		*target = output
+	}
+}
+
 func runProgram(cells []int) error {
 	c := newCombinator()
+	maxOutput := 0
 	for {
-		next, ok := c.next()
+		phaseSettings, ok := c.next()
 		if !ok {
 			break
 		}
-		fmt.Println(next)
+		output := 0
+		for i := 0; i < 5; i++ {
+			vm := NewVM(cells,
+				makeConstantInputter([]int{phaseSettings[i], output}),
+				makeSingleOutputter(&output))
+			vm.run()
+		}
+		if output > maxOutput {
+			maxOutput = output
+		}
 	}
+	fmt.Println(maxOutput)
 	return nil
-
-	vm := NewVM(cells, stdinInputer, stdoutOutputer)
-	return vm.run()
 }
