@@ -259,7 +259,89 @@ func stdoutOutputer(out int) {
 	fmt.Println("OUT:", out)
 }
 
+type combinator struct {
+	current   []int
+	iteration int
+}
+
+func newCombinator() *combinator {
+	return &combinator{}
+}
+
+// gets the next unused number in positions from the first to `pos`
+// if mustBeGreater is true, it must also be greather than the number in position `pos`
+func (c *combinator) nextUnused(pos int, mustBeGreater bool) int {
+	useds := c.current[:pos+1]
+	try := 0
+	if mustBeGreater {
+		try = c.current[pos] + 1
+	}
+	for ; try < 5; try++ {
+		isUsed := false
+		for _, used := range useds {
+			if try == used {
+				isUsed = true
+				break
+			}
+		}
+		if !isUsed {
+			return try
+		}
+	}
+	panic("impossible: all used")
+}
+
+var factorials = []int{1, 1, 2, 6, 24, 120}
+
+// iteration order:
+// 0 1 2 3 4
+// 0 1 2 4 3
+// 0 1 3 2 4
+// ...
+func (c *combinator) next() ([]int, bool) {
+	if c.iteration >= factorials[5]-1 {
+		return nil, false
+	}
+	// initialize iteration 0
+	if c.current == nil {
+		c.current = []int{0, 1, 2, 3, 4}
+		return c.current, true
+	}
+	// every other iteration increment numbers from the left without repeating any
+	c.iteration++
+
+	// numbers at firstChangePos are incremented when the iteration reaches (4-i)!
+	firstChangePos := -1
+	for i := 0; i < 5; i++ {
+		shouldChange := c.iteration%factorials[4-i] == 0
+		if shouldChange {
+			firstChangePos = i
+			break
+		}
+	}
+	if firstChangePos == -1 {
+		panic("impossible")
+	}
+	c.current[firstChangePos] = c.nextUnused(firstChangePos, true)
+	// all numbers after that are filled in based on the min unused number so far (from previous positions)
+	for i := firstChangePos + 1; i < 5; i++ {
+		c.current[i] = c.nextUnused(i-1, false)
+	}
+
+	return c.current, true
+}
+
 func runProgram(cells []int) error {
+	c := newCombinator()
+	for {
+		next, ok := c.next()
+		if !ok {
+			break
+		}
+		fmt.Println(next)
+	}
+	return nil
+
 	vm := NewVM(cells, stdinInputer, stdoutOutputer)
 	return vm.run()
 }
