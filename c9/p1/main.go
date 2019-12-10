@@ -125,7 +125,7 @@ type Outputer func(int64)
 func NewVM(memory []int64, inputer Inputer, outputer Outputer) *VM {
 	memoryCopy := make([]int64, len(memory))
 	copy(memoryCopy, memory)
-	return &VM{memory: memoryCopy, inputer: inputer, outputer: outputer, trace: true}
+	return &VM{memory: memoryCopy, inputer: inputer, outputer: outputer, trace: false}
 }
 
 func (v *VM) runToOutput() error {
