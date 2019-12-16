@@ -498,7 +498,7 @@ func printDrawing(grid [][]string) {
 
 func runProgram(cells []int64) error {
 	cells[0] = 2
-	draw := false
+	draw := true
 	if draw {
 		err := termbox.Init()
 		if err != nil {
@@ -533,7 +533,7 @@ func runProgram(cells []int64) error {
 		panic(fmt.Sprintf("%v %v", ev.Type, ev.Key))
 	}
 	g := NewGame()
-	useAI := true
+	useAI := false
 	if useAI {
 		control = g.AI
 	}
