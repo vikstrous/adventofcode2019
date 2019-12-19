@@ -47,8 +47,9 @@ func run() error {
 	fmt.Println(len(inputExpanded))
 	//output := fftAtLevelAndPosition(inputExpanded, 1, queryLocation)
 	inputExpanded = inputExpanded[queryLocation:]
-	output := fftTimes(inputExpanded, queryLocation, 100)
-	fmt.Printf("%v", output[:7])
+	fmt.Println(len(inputExpanded))
+	output := fftTimes(inputExpanded, 100)
+	fmt.Printf("%v", output[:8])
 	//fmt.Printf("%v", output[queryLocation:queryLocation+7])
 	return nil
 }
@@ -67,73 +68,57 @@ func run() error {
 //	return accum
 //}
 
-func forPatternEntries(inputOffset, inputLen, entryIndex int, f func(int)) {
-	i := 0
-	for i < inputLen {
-		// the pattern is offset by 1
-		patternIndex := i + 1
-		inPatternIndex := patternIndex % (len(pattern) * (inputOffset + 1))
-		// we are in the right area of the pattern
-		fmt.Println("idx", inPatternIndex, (inputOffset + 1))
-		if inPatternIndex/(inputOffset+1) == entryIndex {
-			f(i)
-			i++
-		} else if i > (inputOffset + 1) {
-			// we are not in the right area, so skip forwad 2/4 of the expanded pattern worth
-			i += ((inputOffset + 1) * 2)
-		} else {
-			i++
-		}
-	}
-}
-
-func fftTimes(input []int8, skipOffset, times int) []int8 {
+func fftTimes(input []int8, times int) []int8 {
 	for i := 0; i < times; i++ {
-		input = fft(input, skipOffset)
+		input = fft(input)
 	}
 	return input
 }
 
-func fft(input []int8, skipOffset int) []int8 {
-	output := []int8{}
-	for offset := range input {
-		output = append(output, outputAt(input, skipOffset, offset))
+func fft(input []int8) []int8 {
+	output := make([]int8, len(input))
+	for i := len(input) - 1; i >= 0; i-- {
+		prev := int8(0)
+		if i+1 < len(input) {
+			prev = output[i+1]
+		}
+		output[i] = (input[i] + prev) % 10
 	}
 	return output
 }
 
-func outputAt(input []int8, skipOffset, offset int) int8 {
-	accum := int(0)
-	for i := range input {
-		accum += int(input[i]) * int(patternAt(skipOffset+offset, skipOffset+i))
-		//fmt.Printf("%d*%d + ", input[i], pattern[i])
-	}
-	accum = abs(accum) % 10
-	//fmt.Println(accum)
-	return int8(accum)
-}
+//func outputAt(input []int8, skipOffset, offset int) int8 {
+//	accum := int(0)
+//	for i := range input {
+//		accum += int(input[i]) * int(patternAt(skipOffset+offset, skipOffset+i))
+//		//fmt.Printf("%d*%d + ", input[i], pattern[i])
+//	}
+//	accum = abs(accum) % 10
+//	//fmt.Println(accum)
+//	return int8(accum)
+//}
 
 var pattern = []int8{0, 1, 0, -1}
 
-func patternAt(inputOffset, location int) int8 {
-	// a abbccddaabbccdd...
-	//          ^
-	// aa is a segment
-	// aabbccdd is a pattern
-	//segmentLength := inputOffset + 1
-	//patternLength := segmentLength * 4
-	//// compensate for the initial offset
-	//location = location + 1
-	//offsetInPattern := location % patternLength
-	//indexInPattern := offsetInPattern / segmentLength
-	//return pattern[indexInPattern]
-	//off := ((location + 1) % ((inputOffset + 1) * 4)) / (inputOffset + 1)
-	//return pattern[off]
-	// TODO: not sure how the above becomes this, but it's cool
-	return pattern[(location+1)/(inputOffset+1)%4]
-}
+//func patternAt(inputOffset, location int) int8 {
+//	// a abbccddaabbccdd...
+//	//          ^
+//	// aa is a segment
+//	// aabbccdd is a pattern
+//	//segmentLength := inputOffset + 1
+//	//patternLength := segmentLength * 4
+//	//// compensate for the initial offset
+//	//location = location + 1
+//	//offsetInPattern := location % patternLength
+//	//indexInPattern := offsetInPattern / segmentLength
+//	//return pattern[indexInPattern]
+//	//off := ((location + 1) % ((inputOffset + 1) * 4)) / (inputOffset + 1)
+//	//return pattern[off]
+//	// TODO: not sure how the above becomes this, but it's cool
+//	return pattern[(location+1)/(inputOffset+1)%4]
+//}
 
-func abs(i int) int {
+func abs(i int8) int8 {
 	if i < 0 {
 		return -i
 	}
